@@ -1,0 +1,346 @@
+<?xml version="1.0"?>
+<!-- Primeiro abra o terminal -->
+<!-- roscore -->
+<!-- Primeiro abra outro terminal -->
+<!--cd /opt/robotic_arms_ws/src -->
+<!--roslaunch urdf_tutorial display.launch model:="pioneer7dof/urdf/pioneer_7dof.urdf"-->
+<robot name="robotic_arm">
+    <link name="world"/>
+    <!--ONE-->
+        <link name="base_link">
+            <visual>
+                <geometry>
+                    <box size="0.1 0.1 0.05"/>
+                </geometry>
+                <material name = "White">
+                    <color rgba ="1.0 1.0 1.0 1.0"/>
+                </material>
+                <origin xyz=" 0.0 0.0 0.025" rpy ="0.0 0.0 0.0"/>
+            </visual>
+            <collision>
+                <geometry>
+                    <box size="0.1 0.1 0.05"/>
+                </geometry>
+                 <origin xyz=" 0.0 0.0 0.025" rpy ="0.0 0.0 0.0"/>
+            </collision>
+        </link>
+        <joint name="fixed_base" type = "fixed">
+        <parent link ="world"/>
+        <child link ="base_link"/>
+        </joint>
+
+    <!--ONE LINK-->
+        <link name="One">
+            <visual>
+                <geometry>
+                    <cylinder radius="0.025" length ="0.05"/>
+                </geometry>
+                <material name = "Blue">
+                    <color rgba ="0.0 0.0 1.0 1.0"/>
+                </material>
+                <origin xyz=" 0.0 -0.05 0.0" rpy ="1.5708 0.0 0.0"/>
+                <!--Its the relation between joind and the body in distance-->>
+            </visual>
+            <collision>
+                <geometry>
+                    <cylinder radius="0.025" length ="0.05"/>
+                </geometry>
+               <origin xyz=" 0.0 -0.05 0.0" rpy ="1.5708 0.0 0.0"/>
+            </collision>
+        </link>
+        <joint name="One_joint" type = "revolute">
+        <limit lower="-2.6179" upper="2.6179" effort="100.0" velocity="1.0"/>
+        <!--(pi - pi/12 = 2.8798)-->
+            <parent link ="base_link"/>
+            <child link ="One"/>
+            <axis xyz = "0.0 1.0 0.0"/>
+            <origin xyz = "0.0 0.0 0.125" rpy = "1.5708 0.0 1.5708"/>
+        </joint>
+
+    <!--Two LINK-->
+        <link name="Two">
+            <visual>
+                <geometry>
+                    <cylinder radius="0.025" length ="0.05"/>
+                </geometry>
+                <material name = "White">
+                    <color rgba ="1.0 1.0 1.0 1.0"/>
+                </material>
+                <origin xyz="0.0 0.0 0.0" rpy ="1.5708  0.0 0.0"/>
+                <!--Its the relation between joind and the body in distance-->>
+            </visual>
+            <collision>
+                <geometry>
+                    <cylinder radius="0.025" length ="0.05"/>
+                </geometry>
+               <origin xyz="0.0 0.0 0.0" rpy ="1.5708  0.0 0.0"/>
+            </collision>
+        </link>
+        <joint name="Two_joint" type = "revolute">
+        <limit lower="-1.5358" upper="1.5358" effort="100.0" velocity="1.0"/>
+        <!--(pi/2 = 1.5708)-->
+            <parent link ="One"/>
+            <child link ="Two"/>
+            <axis xyz = "0.0 -1.0 0.0"/>
+            <origin xyz = "0.0 0.0 0.0" rpy = "-1.5708 0.0 0.0"/>
+            <!--This is relation between parent and child joint-->>
+        </joint>
+
+    <!--Three LINK-->
+        <link name="Three">
+            <visual>
+                <geometry>
+                    <cylinder radius="0.025" length ="0.1"/>
+                </geometry>
+                <material name = "Blue">
+                    <color rgba ="0.0 0.0 1.0 1.0"/>
+                </material>
+                <origin xyz=" 0.0 -0.075 0.0" rpy ="1.5708 0.0 0.0"/>
+                <!--Its the relation between joind and the body in distance-->>
+            </visual>
+            <collision>
+                <geometry>
+                    <cylinder radius="0.025" length ="0.1"/>
+                </geometry>
+                <origin xyz=" 0.0 -0.075 0.0" rpy ="1.5708 0.0 0.0"/>
+            </collision>
+        </link>
+        <joint name="Three_joint" type = "revolute">
+        <limit lower="-2.6179" upper="2.6179" effort="100.0" velocity="1.0"/>
+        <!--(pi - pi/12 = 2.8798)-->
+            <parent link ="Two"/>
+            <child link ="Three"/>
+            <axis xyz = "0.0 1.0 0.0"/>
+            <origin xyz = "0.0 0.0 0.15" rpy = "1.5708 0.0 0.0"/>
+            <!--This is relation between parent and child joint-->>
+        </joint>
+        
+   <!--Four LINK-->
+        <link name="Four">
+            <visual>
+                <geometry>
+                    <cylinder radius="0.025" length ="0.05"/>
+                </geometry>
+                <material name = "White">
+                    <color rgba ="1.0 1.0 1.0 1.0"/>
+                </material>
+                <origin xyz="0.0 0.0 0.0" rpy ="1.5708  0.0 0.0"/>
+                <!--Its the relation between joind and the body in distance-->>
+            </visual>
+            <collision>
+                <geometry>
+                    <cylinder radius="0.025" length ="0.05"/>
+                </geometry>
+                <origin xyz="0.0 0.0 0.0" rpy ="1.5708  0.0 0.0"/>
+            </collision>
+        </link>
+        <joint name="Four_joint" type = "revolute">
+        <limit lower="-1.6144" upper="1.6144" effort="100.0" velocity="1.0"/>
+        <!--(pi - pi/12 = 2.8798)-->
+            <parent link ="Three"/>
+            <child link ="Four"/>
+            <axis xyz = "0.0 -1.0 0.0"/>
+            <origin xyz = "0.0 0.0 0.0" rpy = "-1.5708 0.0 0.0"/>
+            <!--This is relation between parent and child joint-->>
+        </joint>   
+        
+   <!--Five LINK-->
+        <link name="Five">
+            <visual>
+                <geometry>
+                    <cylinder radius="0.025" length ="0.095"/>
+                </geometry>
+                <material name = "Blue">
+                    <color rgba ="0.0 0.0 1.0 1.0"/>
+                </material>
+                <origin xyz=" 0.0 -0.0725 0.0" rpy ="1.5708 0.0 0.0"/>
+                <!--Its the relation between joind and the body in distance-->>
+            </visual>
+            <collision>
+                <geometry>
+                    <cylinder radius="0.025" length ="0.095"/>
+                </geometry>
+                <origin xyz=" 0.0 -0.0725 0.0" rpy ="1.5708 0.0 0.0"/>
+            </collision>
+        </link>
+        <joint name="Five_joint" type = "revolute">
+        <limit lower="-2.6179" upper="2.6179" effort="100.0" velocity="1.0"/>
+        <!--(pi - pi/12 = 2.8798)-->
+            <parent link ="Four"/>
+            <child link ="Five"/>
+            <axis xyz = "0.0 1.0 0.0"/>
+            <origin xyz = "0.0 0.0 0.145" rpy = "1.5708 0.0 0.0"/>
+            <!--This is relation between parent and child joint-->>
+        </joint>       
+
+    <!--Six-->
+         <link name="Six">
+            <visual>
+                <geometry>
+                    <cylinder radius="0.025" length ="0.05"/>
+                </geometry>
+                <material name = "White">
+                    <color rgba ="1.0 1.0 1.0 1.0"/>
+                </material>
+                <origin xyz="0.0 0.0 0.0" rpy ="0.0 0.0 0.0"/>
+                <!--Its the relation between joind and the body in distance-->>
+            </visual>
+            <collision>
+                <geometry>
+                    <cylinder radius="0.025" length ="0.05"/>
+                </geometry>
+                <origin xyz="0.0 0.0 0.0" rpy ="0.0 0.0 0.0"/>
+            </collision>
+        </link>
+
+        <joint name="Six_joint" type = "revolute">
+        <limit lower="-1.8413" upper="1.8413" effort="100.0" velocity="1.0"/>
+        <!--(pi - pi/12 = 2.8798)-->
+            <parent link ="Five"/>
+            <child link ="Six"/>
+            <axis xyz = "0.0 0.0 1.0"/>
+            <origin xyz = "0.0 0.0 0.0" rpy = "0.0 0.0 0.0"/>
+        </joint>  
+        
+    <!--Aux-->
+         <link name="Aux">
+            <visual>
+                <geometry>
+                    <cylinder radius="0.025" length ="0.025"/>
+                </geometry>
+                <material name = "White">
+                    <color rgba ="1.0 1.0 1.0 1.0"/>
+                </material>
+                <origin xyz="0.0 -0.0125 0.0" rpy ="-1.5708 0.0 0.0"/>
+                <!--Its the relation between joind and the body in distance-->>
+            </visual>
+            <collision>
+                <geometry>
+                    <cylinder radius="0.025" length ="0.025"/>
+                </geometry>
+                <origin xyz="0.0 -0.0125 0.0" rpy ="-1.5708 0.0 0.0"/>
+            </collision>
+        </link>
+
+        <joint name="Aux_joint" type = "fixed">
+            <parent link ="Six"/>
+            <child link ="Aux"/>
+            <axis xyz = "0.0 0.0 1.0"/>
+            <origin xyz = "0.0 0.05 0.0" rpy = "0.0 0.0 0.0"/>
+        </joint>    
+        
+    <!--Seven LINK-->
+        <link name="Seven">
+            <visual>
+                <geometry>
+                    <cylinder radius="0.025" length ="0.05"/>
+                </geometry>
+                <material name = "Blue">
+                    <color rgba ="0.0 0.0 1.0 1.0"/>
+                </material>
+                <origin xyz=" 0.0 0.0 0.0" rpy ="1.5708 0.0 0.0"/>
+                <!--Its the relation between joind and the body in distance-->>
+            </visual>
+            <collision>
+                <geometry>
+                    <cylinder radius="0.025" length ="0.05"/>
+                </geometry>
+                <origin xyz="0.0 0.0 0.0" rpy ="1.5708 0.0 0.0"/>
+            </collision>
+        </link>
+        <joint name="Seven_joint" type = "revolute">
+        <limit lower="-1.7889" upper="1.7889" effort="100.0" velocity="1.0"/>
+        <!--(pi - pi/12 = 2.8798)-->
+            <parent link ="Aux"/>
+            <child link ="Seven"/>
+            <axis xyz = "0.0 1.0 0.0"/>
+            <origin xyz = "0.0 0.025 0.0" rpy = "1.5708  1.5708  0.0"/>
+            <!--This is relation between parent and child joint-->>
+        </joint>
+        
+    <!-- Gripper_BASE LINK-->
+    <link name="Gripper_Base">
+            <visual>
+                <geometry>
+                    <cylinder radius="0.025" length="0.05"/>
+                </geometry>
+                <material name = "Blue">
+                    <color rgba ="0.0 0.0 1.0 1.0"/>
+                </material>
+                <origin xyz="0.0 0.0 -0.025" rpy="0.0 0.0 0.0"/>
+                <!--Its the relation between joint and the body in distance-->
+            </visual>
+            <collision>
+                <geometry>
+                    <cylinder radius="0.025" length="0.05"/>
+                </geometry>
+                <origin xyz="0.0 0.0 -0.025" rpy="0.0 0.0 0.0"/>
+            </collision>
+    </link>
+    <joint name="Gripper_Base_joint" type="fixed">
+        <parent link="Seven"/>
+        <child link="Gripper_Base"/>
+        <axis xyz="0.0 0.0 1.0"/>
+        <origin xyz="0.0 0 -0.075" rpy="0.0 3.1416 0.0 "/>
+        <!--This origin is relation between parent and child joint-->     
+    </joint>
+
+    <!-- Left_finger LINK-->
+    <link name="L_F">
+            <visual>
+                <geometry>
+                    <box size="0.01 0.01 0.03"/>
+                </geometry>
+                <material name = "Blue">
+                    <color rgba ="0.0 0.0 1.0 1.0"/>
+                </material>
+                <origin xyz="0.0 0.0 0.015" rpy="0.0 0.0 0.0"/>
+                <!--Its the relation between joint and the body in distance-->
+            </visual>
+            <collision>
+                <geometry>
+                    <box size="0.01 0.01 0.03"/>
+                </geometry>
+                <origin xyz="0.0 0.0 0.015" rpy="0.0 0.0 0.0"/>
+            </collision>
+    </link>
+
+    <joint name="L_F_joint" type="prismatic">
+        <limit lower="-0.01" upper="0.01" effort="100.0" velocity="1.0"/>
+        <parent link="Gripper_Base"/>
+        <child link="L_F"/>
+        <axis xyz="0.0 1 0"/>
+        <origin xyz="0.0 0.015 0.0" />
+        <!--This origin is relation between parent and child joint-->
+        
+    </joint>
+
+    <!-- Right Finger LINK-->
+    <link name="R_F">
+            <visual>
+                <geometry>
+                    <box size="0.01 0.01 0.03"/>
+                </geometry>
+                <material name = "Blue">
+                    <color rgba ="0.0 0.0 1.0 1.0"/>
+                </material>
+                <!--Its the relation between joint and the body in distance-->
+            <origin xyz="0.0 0.0 0.015" rpy="0.0 0.0 0.0"/>
+            </visual>
+            <collision>
+                <geometry>
+                    <box size="0.01 0.01 0.03"/>
+                </geometry>
+                <origin xyz="0.0 0.0 0.015" rpy="0.0 0.0 0.0"/>
+            </collision>
+    </link>
+
+    <joint name="R_F_joint" type="prismatic">
+        <limit lower="0.01" upper="-0.01" effort="100.0" velocity="1.0"/>
+        <parent link="Gripper_Base"/>
+        <child link="R_F"/>
+        <axis xyz="0.0 1 0"/>
+        <origin xyz="0.0 -0.015 0.0" />
+        <!--This origin is relation between parent and child joint--> 
+    </joint>
+</robot>
