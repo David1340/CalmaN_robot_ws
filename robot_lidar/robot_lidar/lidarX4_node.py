@@ -12,16 +12,17 @@ class LidarNode(Node):
         self.declare_parameter('port', '/dev/ttyUSB0')
         self.declare_parameter('frame_id', 'laser_link')
         self.declare_parameter('scan_rate', 10.0)
+        self.declare_parameter('chunk_size', 1500)  #pontos
 
         port = self.get_parameter('port').value
         self.frame_id = self.get_parameter('frame_id').value
         self.scan_rate = float(self.get_parameter('scan_rate').value)
-
+        chunk_size = self.get_parameter('chunk_size').value
         self.pub = self.create_publisher(LaserScan, '/robot/scan', 2)
 
         # connect lidar
         self.get_logger().info(f'Connecting to LIDAR on {port}...')
-        self.lidar = PyLidar3.YdLidarX4(port)
+        self.lidar = PyLidar3.YdLidarX4(port,chunk_size)
         connected = False
         for _ in range(5):
             if self.lidar.Connect():

@@ -112,9 +112,19 @@ class STM32Bridge(Node):
                 imu_msg.linear_acceleration.x = values[4]*(9.81/16384.0)
                 imu_msg.linear_acceleration.y = values[5]*(9.81/16384.0)
                 imu_msg.linear_acceleration.z = values[6]*(9.81/16384.0)
+                imu_msg.linear_acceleration_covariance = [
+                    7.120e-04, -1.420e-04, -8.800e-05, 
+                    -1.420e-04, 5.170e-04, 9.700e-05, 
+                    -8.800e-05, 9.700e-05, 2.698e-03]
+                
                 imu_msg.angular_velocity.x = values[7]*np.pi/(180.0*131.0)
                 imu_msg.angular_velocity.y = values[8]*np.pi/(180.0*131.0)
                 imu_msg.angular_velocity.z = values[9]*np.pi/(180.0*131.0)
+                imu_msg.angular_velocity_covariance = [
+                    6.15e-06, -1.06e-06, 7.00e-08,
+                    -1.06e-06,  9.08e-06, -3.20e-07,
+                    7.00e-08, -3.20e-07,  5.58e-06]
+
                 self.imu_pub.publish(imu_msg)
             except Exception as e:
                 self.get_logger().error(f'Error reading from serial: {e}')
