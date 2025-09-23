@@ -10,7 +10,7 @@ class LidarNode(Node):
     def __init__(self):
         super().__init__('lidarX4_node')
         self.declare_parameter('port', '/dev/ttyUSB0')
-        self.declare_parameter('frame_id', 'laser_link')
+        self.declare_parameter('frame_id', 'laser_frame')
         self.declare_parameter('scan_rate', 10.0)
         self.declare_parameter('chunk_size', 1500)  #pontos
 

@@ -10,7 +10,7 @@ class LidarX2Node(Node):
 
         # ----- Parâmetros -----
         self.declare_parameter('lidar_port', '/dev/ttyUSB0')
-        self.declare_parameter('frame_id', 'laser')
+        self.declare_parameter('frame_id', 'laser_frame')
         self.declare_parameter('range_min', 0.12)
         self.declare_parameter('range_max', 8.0)
         self.declare_parameter('publish_rate', 10.0)  # Hz
