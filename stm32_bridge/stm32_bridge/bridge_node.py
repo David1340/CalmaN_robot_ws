@@ -102,9 +102,11 @@ class STM32Bridge(Node):
                 
                 # publicando encoder
                 encoder_msg = Float32MultiArray()
-                phi_l = values[2]*(2*np.pi/(4*224.4*10e-3)) #rad/s
-                phi_d = values[3]*(2*np.pi/(4*224.4*10e-3)) #rad/s
-                encoder_msg.data = [values[0] - 32000.0,values[1] - 32000.0,phi_l,phi_d] # encoder1 e encoder2
+                tick2rad = (2*np.pi/(4*224.4))
+                phiE = values[2]*tick2rad/(10e-3)#rad/s
+                phiD = values[3]*tick2rad/(10e-3)# #rad/s
+                encoder_msg.data = [(values[0] - 32000)*tick2rad,(values[1] - 32000)*tick2rad,
+                                    phiE,phiD] # encoder1 e encoder2
                 self.encoder_publisher.publish(encoder_msg)
 
                 # publicando IMU
