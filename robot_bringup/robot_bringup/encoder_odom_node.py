@@ -30,33 +30,37 @@ class EncoderOdom(Node):
         self.x = 0.0
         self.y = 0.0
         self.th = 0.0
+        # Velocidades das rodas
+        self.phiE = 0.0  # rad/s roda esquerda
+        self.phiD = 0.0  # rad/s roda direita
+        # Posições das rodas
+        self.posE = 0.0 # rad roda esquerda
+        self.posD = 0.0 # rad roda direita
+
+
+
         self.last_time = self.get_clock().now()
+        self.create_timer(0.02, self.update_odometry)
+
 
         # Dimensões do robô (ajuste para seu robô real)
-        self.R = 0.03  # raio da roda (m)
+        self.R = 0.03   # raio da roda (m)
         self.L = 0.173   # distância entre rodas (m)
 
-    def encoder_callback(self, msg: Float32MultiArray):
+    def update_odometry(self):
         """
-        msg.data = [posE, posD, phiE, phiD]
-        - posE / posD: posição absoluta (ticks)
-        - phiE / phiD: velocidade (rad/s)
+        Integra pose e publica odometria em taxa fixa (50 Hz).
         """
-
         now = self.get_clock().now()
         dt = (now - self.last_time).nanoseconds * 1e-9
         self.last_time = now
 
         if dt <= 0:
-            return
-
-        # Leitura das velocidades dos encoders
-        phiE = msg.data[2]  # rad/s roda esquerda
-        phiD = msg.data[3]  # rad/s roda direita
-
-        # Cinemática diferencial
-        vx = (phiD + phiE) * self.R / 2.0
-        vth = (phiD - phiE)* self.R / self.L
+            return       
+        
+               # Cinemática diferencial
+        vx = (self.phiD + self.phiE) * self.R / 2.0
+        vth = (self.phiD - self.phiE)* self.R / self.L
 
         # Integração da pose
         self.x += vx * np.cos(self.th) * dt
@@ -71,8 +75,8 @@ class EncoderOdom(Node):
         joint_state.header = Header()
         joint_state.header.stamp = now.to_msg()
         joint_state.name = ['left_wheel_joint', 'right_wheel_joint']
-        joint_state.velocity = [phiE, phiD]
-        joint_state.position = [msg.data[0], msg.data[1]]  # posE(rad),posD(rad)
+        joint_state.velocity = [self.phiE, self.phiD]
+        joint_state.position = [self.posE, self.posD]  # posE(rad),posD(rad)
         self.joint_pub.publish(joint_state)
 
         # Publica TF odom → base_link
@@ -83,8 +87,8 @@ class EncoderOdom(Node):
         t.transform.translation.x = self.x
         t.transform.translation.y = self.y
         t.transform.translation.z = 0.0
-        t.transform.rotation.z = np.cos(self.th / 2)
-        t.transform.rotation.w = np.sin(self.th / 2)
+        t.transform.rotation.z = np.sin(self.th / 2)
+        t.transform.rotation.w = np.cos(self.th / 2)
         self.tf_broadcaster.sendTransform(t)
 
         # Publica mensagem de odometria
@@ -93,13 +97,30 @@ class EncoderOdom(Node):
         odom.header.frame_id = "odom"
         odom.pose.pose.position.x = self.x
         odom.pose.pose.position.y = self.y
-        t.transform.rotation.z = np.cos(self.th / 2)
-        t.transform.rotation.w = np.sin(self.th / 2)
+        t.transform.rotation.z = np.sin(self.th / 2)
+        t.transform.rotation.w = np.cos(self.th / 2)
         odom.child_frame_id = "base_link"
         odom.twist.twist.linear.x = vx
         odom.twist.twist.angular.z = vth
         self.odom_pub.publish(odom)
 
+
+
+
+    def encoder_callback(self, msg: Float32MultiArray):
+        """
+        msg.data = [posE, posD, phiE, phiD]
+        - posE / posD: posição absoluta (ticks)
+        - phiE / phiD: velocidade (rad/s)
+        """
+        # Posições das rodas
+        self.posE = msg.data[0] # rad roda esquerda
+        self.posD = msg.data[1] # rad roda direita
+        # Leitura das velocidades dos encoders
+        self.phiE = msg.data[2]  # rad/s roda esquerda
+        self.phiD = msg.data[3]  # rad/s roda direita
+
+ 
 
 def main(args=None):
     rclpy.init(args=args)
