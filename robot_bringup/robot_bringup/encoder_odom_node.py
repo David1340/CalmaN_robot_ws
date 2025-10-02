@@ -40,7 +40,7 @@ class EncoderOdom(Node):
 
 
         self.last_time = self.get_clock().now()
-        self.create_timer(0.02, self.update_odometry)
+        self.create_timer(0.033, self.update_odometry)
 
 
         # Dimensões do robô (ajuste para seu robô real)
