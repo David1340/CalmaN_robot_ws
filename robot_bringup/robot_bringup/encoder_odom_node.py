@@ -13,9 +13,14 @@ class EncoderOdom(Node):
     def __init__(self):
         super().__init__('encoder_odom')
 
+        # Parâmetros
+        self.declare_parameter('wheels_radius', 0.03)  # em metros
+        self.declare_parameter('wheels_distance', 0.173) # distância entre as rodas em metros
+        self.declare_parameter('initial_state', [0.0, 0.0, 0.0]) # definição da posição inicial
+
         # Publishers
-        self.joint_pub = self.create_publisher(JointState, '/joint_states', 2)
-        self.odom_pub = self.create_publisher(Odometry, '/odom', 2)
+        self.joint_pub = self.create_publisher(JointState, '/joint_states', 10)
+        self.odom_pub = self.create_publisher(Odometry, '/odom', 10)
         self.tf_broadcaster = TransformBroadcaster(self)
 
         # Subscriber para os encoders
@@ -23,13 +28,15 @@ class EncoderOdom(Node):
             Float32MultiArray,
             '/robot/encoder',
             self.encoder_callback,
-            2
+            10
         )
 
+        initial_state = self.get_parameter('initial_state').value
+        if len(initial_state) != 3:
+            self.get_logger().error("Parâmetro 'initial_state' deve conter [x, y, yaw]")
+            initial_state = [0.0, 0.0, 0.0]
         # Estado do robô
-        self.x = 0.0
-        self.y = 0.0
-        self.th = 0.0
+        self.x, self.y, self.th = initial_state
         # Velocidades das rodas
         self.phiE = 0.0  # rad/s roda esquerda
         self.phiD = 0.0  # rad/s roda direita
@@ -43,22 +50,21 @@ class EncoderOdom(Node):
         self.create_timer(0.033, self.update_odometry)
 
 
-        # Dimensões do robô (ajuste para seu robô real)
-        self.R = 0.03   # raio da roda (m)
-        self.L = 0.173   # distância entre rodas (m)
+        self.L = self.get_parameter('wheels_distance').value
+        self.R = self.get_parameter('wheels_radius').value
 
     def update_odometry(self):
         """
-        Integra pose e publica odometria em taxa fixa (50 Hz).
+        Integra pose e publica odometria 
         """
         now = self.get_clock().now()
         dt = (now - self.last_time).nanoseconds * 1e-9
         self.last_time = now
 
-        if dt <= 0:
-            return       
+        #if dt <= 0:
+        #    return       
         
-               # Cinemática diferencial
+        # Cinemática diferencial
         vx = (self.phiD + self.phiE) * self.R / 2.0
         vth = (self.phiD - self.phiE)* self.R / self.L
 
@@ -97,8 +103,8 @@ class EncoderOdom(Node):
         odom.header.frame_id = "odom"
         odom.pose.pose.position.x = self.x
         odom.pose.pose.position.y = self.y
-        t.transform.rotation.z = np.sin(self.th / 2)
-        t.transform.rotation.w = np.cos(self.th / 2)
+        odom.pose.pose.orientation.z = np.sin(self.th / 2)
+        odom.pose.pose.orientation.w = np.cos(self.th / 2)
         odom.child_frame_id = "base_link"
         odom.twist.twist.linear.x = vx
         odom.twist.twist.angular.z = vth
@@ -119,6 +125,8 @@ class EncoderOdom(Node):
         # Leitura das velocidades dos encoders
         self.phiE = msg.data[2]  # rad/s roda esquerda
         self.phiD = msg.data[3]  # rad/s roda direita
+
+        #self.update_odometry()
 
  
 

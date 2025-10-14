@@ -55,23 +55,27 @@ class STM32Bridge(Node):
             Twist,
             '/robot/cmd_vel',
             self.cmd_vel_callback,
-            2 
+            10 
             )
         
         #Publisher para enviar dados do STM32
         self.encoder_publisher = self.create_publisher(
             Float32MultiArray,
             '/robot/encoder',
-            2 
+            10 
             )
         
         self.imu_pub = self.create_publisher(
         Imu,
         '/robot/imu',  
-        2 
+        10 
         )
 
-        self.timer = self.create_timer(2e-3, self.read_serial)  # 500 Hz (2 ms)
+        self.serial_time = 2e-3 # 500 Hz (2 ms)
+        #self.publish_time = 4e-3 # 250 Hz (4ms)
+        #self.cnt = 0
+
+        self.timer = self.create_timer(self.serial_time, self.read_serial)  # 500 Hz (2 ms)
 
     def _open_serial(self): 
         try:
@@ -93,13 +97,15 @@ class STM32Bridge(Node):
             self.v_r, self.v_l = self._inverse_kinematics(v, w) #set points de velocidade
 
     def read_serial(self):
+        #self.cnt = self.cnt + 1
         if self.serial and self.serial.is_open:
             msg = self._montar_mensagem(self.v_r, self.v_l)
             self.serial.write(msg)
             try:
                 data = self.serial.read(20)  # Ler 20 bytes
                 values = np.frombuffer(data, dtype=np.int16).astype(np.float32)
-                
+
+
                 # publicando encoder
                 encoder_msg = Float32MultiArray()
                 tick2rad = (2*np.pi/(4*224.4))
@@ -126,8 +132,16 @@ class STM32Bridge(Node):
                     6.15e-06, -1.06e-06, 7.00e-08,
                     -1.06e-06,  9.08e-06, -3.20e-07,
                     7.00e-08, -3.20e-07,  5.58e-06]
-
                 self.imu_pub.publish(imu_msg)
+
+                
+                #if self.cnt > (self.publish_time/self.serial_time):
+                    # publicando encoder
+                #    self.encoder_publisher.publish(encoder_msg)
+                    # publicando IMU
+                #    self.imu_pub.publish(imu_msg)
+                #    self.cnt = 0
+
             except Exception as e:
                 self.get_logger().error(f'Error reading from serial: {e}')
 
