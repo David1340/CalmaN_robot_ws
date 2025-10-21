@@ -1,0 +1,28 @@
+# Nome do Projeto
+> Descrição curta do projeto
+
+## Tabela de Conteúdos
+- [Sobre](#sobre)
+- [Instalação](#instalacao)
+- [Uso](#uso)
+- [Dependências](#dependencias)
+- [Contribuição](#contribuicao)
+- [Licença](#licenca)
+
+## Sobre
+Aqui você explica o que o projeto faz, seu objetivo e contexto.  
+Exemplo:  
+> Este projeto tem como objetivo ...
+
+## Instalação
+Passo a passo de como instalar e rodar o projeto:  
+Instale o drive do YDLIDAR: https://github.com/YDLIDAR/YDLidar-SDK
+```bash
+# Clonar o repositório
+git clone https://github.com/SEU_USUARIO/NOME_DO_PROJETO.git
+
+# Entrar na pasta do projeto
+cd NOME_DO_PROJETO
+
+# Instalar dependências (exemplo em Node.js)
+npm install
