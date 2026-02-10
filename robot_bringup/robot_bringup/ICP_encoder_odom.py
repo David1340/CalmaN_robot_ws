@@ -191,8 +191,8 @@ class Odom(Node):
 
         # Publishers
         self.odom_pub = self.create_publisher(Odometry, '/odom', 10)
-        self.serial_time = 10e-3
-        self.timer = self.create_timer(self.serial_time, self.send_data)  # 500 Hz (2 ms)
+        #self.serial_time = 10e-3
+        #self.timer = self.create_timer(self.serial_time, self.send_data)  # 500 Hz (2 ms)
 
         # Subscribers 
         self.subscription = self.create_subscription(
@@ -264,8 +264,9 @@ class Odom(Node):
             self.odom.setPose(Pose[0], Pose[1], Pose[2])
             self.poseMsg.pose.pose.orientation.z = np.sin(self.th / 2)
             self.poseMsg.pose.pose.orientation.w = np.cos(self.th / 2)
+            self.odom_pub.publish(self.poseMsg)
 
-    def send_data(self):
-        self.odom_pub.publish(self.poseMsg)
+    #def send_data(self):
+        #self.odom_pub.publish(self.poseMsg)
 
 
