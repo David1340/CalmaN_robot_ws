@@ -3,6 +3,7 @@ from rclpy.node import Node
 from nav_msgs.msg import Odometry
 from std_msgs.msg import Float32MultiArray, Header
 from sensor_msgs.msg import LaserScan
+from rclpy.qos import QoSProfile, QoSReliabilityPolicy
 from scipy.spatial import KDTree
 import numpy as np
 
@@ -155,7 +156,7 @@ class ICP2D:
                     break
         else:
             raise ValueError("Método desconhecido. Use 'point-to-point' ou 'point-to-plane'.")
-        self.pre = pointCloud_aux
+        self.prev_pointCloud = pointCloud_aux
         tx = self.trans[0]
         ty = self.trans[1]
         dth = np.arctan2(self.rot[1,0], self.rot[0,0]) #theta
@@ -175,8 +176,8 @@ class ICP2D:
 
 class Odom(Node):
     def __init__(self):
-        super().__init__('odometry')
-
+        super().__init__('encoder_scan_odom')
+        self.get_logger().info("Nó criado")
         #messages
         self.poseMsg = Odometry()
         self.poseMsg.header.frame_id = "odom"
@@ -195,18 +196,18 @@ class Odom(Node):
         #self.timer = self.create_timer(self.serial_time, self.send_data)  # 500 Hz (2 ms)
 
         # Subscribers 
-        self.subscription = self.create_subscription(
+        self.encoder_subscriber = self.create_subscription(
             Float32MultiArray,
             '/robot/encoder',
             self.encoder_callback,
             10
         )
 
-        self.subscription = self.create_subscription(
-            Float32MultiArray,
+        self.scan_subscriber = self.create_subscription(
+            LaserScan,
             '/robot/scan',
             self.scan_callback,
-            10
+            QoSProfile(depth=10, reliability=QoSReliabilityPolicy.SYSTEM_DEFAULT)
         )
 
         initial_state = self.get_parameter('initial_state').value
@@ -222,7 +223,7 @@ class Odom(Node):
         self.L = self.get_parameter('L').value
         self.r = self.get_parameter('r').value
         self.N = self.get_parameter('N').value
-
+        self.stoped = False
         self.odom = Odometria()
         self.odom.setPose(self.x, self.y, self.th)
 
@@ -236,6 +237,9 @@ class Odom(Node):
             self.odom.phiD_prev = msg.data[1]
         else:
             now = self.get_clock().now()
+            if(msg.data[0] == self.odom.phiE_prev and msg.data[1] == self.odom.phiD_prev):
+                self.stoped = True
+
             self.odom.updatePose(msg.data[0], msg.data[1])
             Pose = self.odom.getPose()
             self.poseMsg.header.stamp = now.to_msg()
@@ -246,27 +250,44 @@ class Odom(Node):
     
     def scan_callback(self, msg: LaserScan):
         distances = msg.ranges
-        angles = np.linspace(self.range_min, self.range_max, len(distances))
+        angles = np.linspace(msg.range_min, msg.range_max, len(distances))
         x = distances*np.cos(angles)
         y = distances*np.sin(angles)
         pointCloud = np.array([x, y])
-        if(self.icp.prev_pointCloud == None):
+        if(self.icp.prev_pointCloud is None):
             
             self.icp.setPrev_pointCloud(pointCloud)
 
         else:
             self.icp.updatePose(pointCloud, method=self.icp_method)
             Pose = self.icp.getPose()
+            self.get_logger().info("Pose encoder: " + str(Pose))
+            self.get_logger().info("Pose lidar: " + str(Pose))
             Pose_odom = self.odom.getPose()
             Pose[0] = Pose_odom[0]
             Pose[1] = Pose_odom[1]
+            if(self.stoped):
+                Pose_odom[2] = Pose[2]
+                self.get_logger().info("Leitura do lidar ignorada na fusão porque os encoders estão parados.")
+
             self.icp.setPose(Pose[0], Pose[1], Pose[2])
             self.odom.setPose(Pose[0], Pose[1], Pose[2])
             self.poseMsg.pose.pose.orientation.z = np.sin(self.th / 2)
             self.poseMsg.pose.pose.orientation.w = np.cos(self.th / 2)
             self.odom_pub.publish(self.poseMsg)
+            self.get_logger().info("Pose Fusão (encoder + lidar): " + str(Pose_odom))
 
     #def send_data(self):
         #self.odom_pub.publish(self.poseMsg)
 
-
+def main(args=None):
+    rclpy.init(args=args)
+    node = Odom()
+    try:
+        rclpy.spin(node) # Mantém o nó ativo para callbacks
+    except KeyboardInterrupt:  
+        pass
+    finally: # o que fazer quando o nó for encerrado:
+        
+        node.destroy_node()
+        rclpy.shutdown()
