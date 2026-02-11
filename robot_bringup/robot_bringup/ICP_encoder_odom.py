@@ -225,7 +225,7 @@ class Odom(Node):
         self.L = self.get_parameter('L').value
         self.r = self.get_parameter('r').value
         self.N = self.get_parameter('N').value
-        self.stoped = False
+        self.stoped = True
         self.odom = Odometria()
         self.odom.setPose(self.x, self.y, self.th)
 
@@ -239,8 +239,8 @@ class Odom(Node):
             self.odom.phiD_prev = msg.data[1]
         else:
             now = self.get_clock().now()
-            if(msg.data[0] == self.odom.phiE_prev and msg.data[1] == self.odom.phiD_prev):
-                self.stoped = True
+            if(msg.data[0] != self.odom.phiE_prev or msg.data[1] != self.odom.phiD_prev):
+                self.stoped = False
 
             self.odom.updatePose(msg.data[0], msg.data[1])
             Pose = self.odom.getPose()
