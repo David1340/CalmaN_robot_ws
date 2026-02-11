@@ -61,9 +61,8 @@ class ICP2D:
         self.Pose = np.zeros(3) #Pose atual do robô [x,y,theta]
 
     def updatePose(self,pointCloud, method='point-to-point'):
-
-        pointCloud = pointCloud.T
-        pointCloud_aux = pointCloud.copy()
+        source = pointCloud.T
+        source_copy = source.copy()
         tree = KDTree(self.prev_pointCloud)
         sensor = np.array([0,0])  # posição do sensor
         #correspondencias = correspondencias[distances < self.filter]
@@ -72,12 +71,12 @@ class ICP2D:
         self.trans = np.zeros(2)
         if(method == 'point-to-point'):
             for _ in range(self.max_iterations):
-                distances, correspondencias = tree.query(pointCloud)
-                pointCloud_matched = self.prev_pointCloud[correspondencias,:]
+                distances, correspondencias = tree.query(source)
+                target = self.prev_pointCloud[correspondencias,:]
                 #Calcular a transformação usando SVD
-                centroid = np.mean(pointCloud, axis=0)
-                centroid_matched = np.mean(pointCloud_matched, axis=0)
-                H = (pointCloud - centroid).T @ (pointCloud_matched - centroid_matched)
+                centroid_source = np.mean(source, axis=0)
+                centroid_target= np.mean(target, axis=0)
+                H = (source - centroid_source).T @ (target - centroid_target)
                 U, S, Vt = np.linalg.svd(H)
                 R = Vt.T @ U.T
 
@@ -85,48 +84,49 @@ class ICP2D:
                     Vt[1,:] *= -1
                     R = Vt.T @ U.T
                 
-                trans = centroid_matched - centroid @ R.T
+                trans = centroid_target - centroid_source @ R.T
 
                 #atualizar a transformação acumulada
                 self.rot = R @ self.rot
                 self.trans = self.trans @ R.T  + trans #R*t1 + t2
 
                 #atualizar a nuvem de pontos
-                pointCloud = pointCloud @ R.T + trans
+                source = source @ R.T + trans
 
                 if(np.mean(distances) < self.tolerance):
                     break
 
         elif(method == 'point-to-plane'):
             k = 5 #vizinhos mais próximos para estimar o vetor normal
-            normals = np.zeros_like(self.prev_pointCloud)
+            target = self.prev_pointCloud.copy()
+            normals = np.zeros_like(target)
 
-            distances, idx_all = tree.query(self.prev_pointCloud, k=k)   # shape (N,k)
+            distances, idx_all = tree.query(target, k=k)   # shape (N,k)
 
-            neighbors = self.prev_pointCloud[idx_all]            # (N,k,2)
-            centroid = neighbors.mean(axis=1, keepdims=True)
-            neighbors_c = neighbors - centroid
+            neighbors = target[idx_all]            # (N,k,2)
+            centroid_source = neighbors.mean(axis=1, keepdims=True)
+            neighbors_c = neighbors - centroid_source
 
             cov = np.einsum('nik,nil->nkl', neighbors_c, neighbors_c) / k
             eigvals, eigvecs = np.linalg.eigh(cov)
             normals = eigvecs[:, :, 0]   # menor autovalor
             normals /= np.linalg.norm(normals, axis=1, keepdims=True)
 
-            A = np.zeros((len(pointCloud), 3))
-            b = np.zeros(len(pointCloud))
+            A = np.zeros((len(source), 3))
+            b = np.zeros(len(source))
 
             for _ in range(self.max_iterations):
-                distances, correspondencias = tree.query(pointCloud)
+                distances, correspondencias = tree.query(source)
                 mask = distances <  0.1 # 10 cm 
-                pointCloud_matched = self.prev_pointCloud[correspondencias[mask],:]
+                target = self.prev_pointCloud[correspondencias[mask],:]
                 
                 #Calcular a transformação usando pseudo inversa
                 
-                px = pointCloud[mask,0]
-                py = pointCloud[mask,1]
+                px = source[mask,0]
+                py = source[mask,1]
 
-                qx = pointCloud_matched[:,0]
-                qy = pointCloud_matched[:,1]
+                qx = target[:,0]
+                qy = target[:,1]
 
                 nx = normals[correspondencias[mask],0]
                 ny = normals[correspondencias[mask],1]
@@ -150,13 +150,13 @@ class ICP2D:
                 self.trans = self.trans @ R.T  + trans #R*t1 + t2
 
                 #atualizar a nuvem de pontos
-                pointCloud = pointCloud @ R.T + trans
+                source = source @ R.T + trans
 
                 if(np.linalg.norm(x) < self.tolerance):
                     break
         else:
             raise ValueError("Método desconhecido. Use 'point-to-point' ou 'point-to-plane'.")
-        self.prev_pointCloud = pointCloud_aux
+        self.prev_pointCloud = source_copy
         tx = self.trans[0]
         ty = self.trans[1]
         dth = np.arctan2(self.rot[1,0], self.rot[0,0]) #theta
