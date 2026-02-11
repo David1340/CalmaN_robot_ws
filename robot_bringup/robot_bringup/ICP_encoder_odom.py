@@ -70,31 +70,33 @@ class ICP2D:
         self.rot = np.eye(2,2)
         self.trans = np.zeros(2)
         if(method == 'point-to-point'):
-            for _ in range(self.max_iterations):
-                distances, correspondencias = tree.query(source)
-                target = self.prev_pointCloud[correspondencias,:]
-                #Calcular a transformação usando SVD
-                centroid_source = np.mean(source, axis=0)
-                centroid_target= np.mean(target, axis=0)
-                H = (source - centroid_source).T @ (target - centroid_target)
-                U, S, Vt = np.linalg.svd(H)
-                R = Vt.T @ U.T
+                    for _ in range(self.max_iterations):
+                        distances, correspondencias = tree.query(source)
+                        mask = distances <  0.1 # 10 cm 
+                        target = self.prev_pointCloud[correspondencias[mask],:]
+                        #Calcular a transformação usando SVD
+                        source_filtered = source[mask,:]
+                        centroid_source = np.mean(source_filtered, axis=0)
+                        centroid_target= np.mean(target, axis=0)
+                        H = (source_filtered - centroid_source).T @ (target - centroid_target)
+                        U, S, Vt = np.linalg.svd(H)
+                        R = Vt.T @ U.T
 
-                if(np.linalg.det(R) < 0):
-                    Vt[1,:] *= -1
-                    R = Vt.T @ U.T
-                
-                trans = centroid_target - centroid_source @ R.T
+                        if(np.linalg.det(R) < 0):
+                            Vt[1,:] *= -1
+                            R = Vt.T @ U.T
+                        
+                        trans = centroid_target - centroid_source @ R.T
 
-                #atualizar a transformação acumulada
-                self.rot = R @ self.rot
-                self.trans = self.trans @ R.T  + trans #R*t1 + t2
+                        #atualizar a transformação acumulada
+                        self.rot = R @ self.rot
+                        self.trans = self.trans @ R.T  + trans #R*t1 + t2
 
-                #atualizar a nuvem de pontos
-                source = source @ R.T + trans
+                        #atualizar a nuvem de pontos
+                        source = source @ R.T + trans
 
-                if(np.mean(distances) < self.tolerance):
-                    break
+                        if(np.mean(distances) < self.tolerance):
+                            break
 
         elif(method == 'point-to-plane'):
             k = 5 #vizinhos mais próximos para estimar o vetor normal
