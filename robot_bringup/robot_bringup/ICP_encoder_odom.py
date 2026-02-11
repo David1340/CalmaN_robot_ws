@@ -267,6 +267,7 @@ class Odom(Node):
             Pose[0] = Pose_odom[0]
             Pose[1] = Pose_odom[1]
             if(self.stoped):
+                self.stoped = False
                 Pose_odom[2] = Pose[2]
                 self.get_logger().info("Leitura do lidar ignorada na fusão porque os encoders estão parados.")
 
