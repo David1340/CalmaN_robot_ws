@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from nav_msgs.msg import Odometry
+from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import Float32MultiArray, Header
 from sensor_msgs.msg import LaserScan
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy
@@ -179,21 +179,20 @@ class ICP2D:
 class Odom(Node):
     def __init__(self):
         super().__init__('encoder_scan_odom')
-        self.get_logger().info("Nó criado")
+        
         #messages
-        self.poseMsg = Odometry()
-        self.poseMsg.header.frame_id = "odom"
-        self.poseMsg.child_frame_id = "base_link"
+        self.pose_msg = PoseStamped()
+        self.pose_msg.header.frame_id = "world" 
 
         #parameters
         self.declare_parameter('r', 0.0325) #raio da roda
         self.declare_parameter('L', 0.175)  #distância entre as rodas
         self.declare_parameter('N', 4*224.4) #pulsos por revolução (com quadratura)
         self.declare_parameter('initial_state', [0.0, 0.0, 0.0]) # definição da posição inicial
-        self.declare_parameter('icp_method', 'point-to-plane') # método ICP
+        self.declare_parameter('icp_method', 'point-to-point') # método ICP
 
         # Publishers
-        self.odom_pub = self.create_publisher(Odometry, '/odom', 10)
+        self.odom_pub = self.create_publisher(PoseStamped, '/robot/pose', 10)
         #self.serial_time = 10e-3
         #self.timer = self.create_timer(self.serial_time, self.send_data)  # 500 Hz (2 ms)
 
@@ -232,53 +231,58 @@ class Odom(Node):
         self.icp = ICP2D()
         self.icp.setPose(self.x, self.y, self.th)
         self.icp_method = self.get_parameter('icp_method').value
+        self.get_logger().info("Nó criado")
 
     def encoder_callback(self, msg: Float32MultiArray):
-        if(self.odom.phiE_prev == None or self.odom.phiD_prev == None):
+        if(self.odom.phiE_prev is None or self.odom.phiD_prev is None):
             self.odom.phiE_prev = msg.data[0]
             self.odom.phiD_prev = msg.data[1]
         else:
-            now = self.get_clock().now()
             if(msg.data[0] != self.odom.phiE_prev or msg.data[1] != self.odom.phiD_prev):
                 self.stoped = False
 
             self.odom.updatePose(msg.data[0], msg.data[1])
-            Pose = self.odom.getPose()
-            self.poseMsg.header.stamp = now.to_msg()
-            self.poseMsg.pose.pose.position.x = Pose[0]
-            self.poseMsg.pose.pose.position.y = Pose[1]
-            self.poseMsg.pose.pose.orientation.z = np.sin(self.th / 2)
-            self.poseMsg.pose.pose.orientation.w = np.cos(self.th / 2)
+            '''Pose = self.odom.getPose()
+            self.pose_msg.header.stamp = self.get_clock().now().to_msg()
+            self.pose_msg.pose.position.x = float(Pose[0])
+            self.pose_msg.pose.position.y = float(Pose[1])
+            self.pose_msg.pose.position.z = Pose[2]
+            self.pose_msg.pose.orientation.x = 0.0
+            self.pose_msg.pose.orientation.y = 0.0
+            self.pose_msg.pose.orientation.z = np.sin(Pose[2]/2)
+            self.pose_msg.pose.orientation.w = np.cos(Pose[2])'''
     
     def scan_callback(self, msg: LaserScan):
         distances = msg.ranges
-        angles = np.linspace(msg.range_min, msg.range_max, len(distances))
+        angles = np.linspace(msg.angle_min, msg.angle_max, len(distances)) + np.pi/2
         x = distances*np.cos(angles)
         y = distances*np.sin(angles)
         pointCloud = np.array([x, y])
         if(self.icp.prev_pointCloud is None):
             
             self.icp.setPrev_pointCloud(pointCloud)
+            Pose = self.odom.getPose()
 
         else:
             self.icp.updatePose(pointCloud, method=self.icp_method)
             Pose = self.icp.getPose()
-            self.get_logger().info("Pose encoder: " + str(Pose))
-            self.get_logger().info("Pose lidar: " + str(Pose))
+            
             Pose_odom = self.odom.getPose()
             Pose[0] = Pose_odom[0]
             Pose[1] = Pose_odom[1]
             if(self.stoped):
-                self.stoped = False
-                Pose_odom[2] = Pose[2]
+                Pose[2] = Pose_odom[2]
                 self.get_logger().info("Leitura do lidar ignorada na fusão porque os encoders estão parados.")
 
-            self.icp.setPose(Pose[0], Pose[1], Pose[2])
-            self.odom.setPose(Pose[0], Pose[1], Pose[2])
-            self.poseMsg.pose.pose.orientation.z = np.sin(self.th / 2)
-            self.poseMsg.pose.pose.orientation.w = np.cos(self.th / 2)
-            self.odom_pub.publish(self.poseMsg)
-            self.get_logger().info("Pose Fusão (encoder + lidar): " + str(Pose_odom))
+        self.icp.setPose(Pose[0], Pose[1], Pose[2])
+        self.odom.setPose(Pose[0], Pose[1], Pose[2])
+        self.pose_msg.pose.position.x = Pose[0]
+        self.pose_msg.pose.position.y = Pose[1]
+        self.pose_msg.pose.position.z = Pose[2]
+        self.pose_msg.pose.orientation.z = np.sin(self.th / 2)
+        self.pose_msg.pose.orientation.w = np.cos(self.th / 2)
+        self.odom_pub.publish(self.pose_msg)
+        self.get_logger().info("Pose Fusão (encoder + lidar): " + str(Pose))
 
     #def send_data(self):
         #self.odom_pub.publish(self.poseMsg)
