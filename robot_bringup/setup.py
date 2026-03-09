@@ -26,6 +26,7 @@ setup(
         'console_scripts': [
             'encoder_odom = robot_bringup.encoder_odom_node:main',
             'encoder_scan_odom = robot_bringup.ICP_encoder_odom:main',
+            'slam_odom = robot_bringup.slam_odom:main',
         ],
     },
 )
