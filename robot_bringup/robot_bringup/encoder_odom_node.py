@@ -113,12 +113,6 @@ class EncoderOdom(Node):
         vx = (self.R/2.0) * (self.phiD + self.phiE)
         vth = (self.R/self.L) * (self.phiD - self.phiE)
 
-        # ===============================
-        # Atualiza posições anteriores
-        # ===============================
-
-        self.posE_prev = self.posE
-        self.posD_prev = self.posD
 
         # Orientação como quaternion
         #odom_quat = tf_transformations.quaternion_from_euler(0, 0, self.th)
@@ -171,6 +165,12 @@ class EncoderOdom(Node):
             return
         else:
             self.get_logger().info(f"Received encoder data")
+        
+        # ===============================
+        # Atualiza posições anteriores
+        # ===============================
+        self.posE_prev = self.posE
+        self.posD_prev = self.posD
         # Posições das rodas
         self.posE = msg.data[0] # rad roda esquerda
         self.posD = msg.data[1] # rad roda direita
