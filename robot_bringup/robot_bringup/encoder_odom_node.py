@@ -14,8 +14,9 @@ class EncoderOdom(Node):
         super().__init__('encoder_odom')
 
         # Parâmetros
+        self.declare_parameter('encoder_range', 2*np.pi)  # em radianos (2*pi)
         self.declare_parameter('wheels_radius', 0.03)  # em metros
-        self.declare_parameter('wheels_distance', 0.173) # distância entre as rodas em metros
+        self.declare_parameter('wheels_distance', 0.174) # distância entre as rodas em metros
         self.declare_parameter('initial_state', [0.0, 0.0, 0.0]) # definição da posição inicial
 
         # Publishers
@@ -43,6 +44,9 @@ class EncoderOdom(Node):
         # Posições das rodas
         self.posE = 0.0 # rad roda esquerda
         self.posD = 0.0 # rad roda direita
+        # Posições das rodas (Prev)
+        self.posE_prev = 0.0 # rad roda esquerda
+        self.posD_prev = 0.0 # rad roda direita
 
 
 
@@ -52,6 +56,7 @@ class EncoderOdom(Node):
 
         self.L = self.get_parameter('wheels_distance').value
         self.R = self.get_parameter('wheels_radius').value
+        self.encoder_range = self.get_parameter('encoder_range').value
 
     def update_odometry(self):
         """
@@ -61,17 +66,59 @@ class EncoderOdom(Node):
         dt = (now - self.last_time).nanoseconds * 1e-9
         self.last_time = now
 
-        #if dt <= 0:
-        #    return       
+        if dt <= 0:
+            return       
         
-        # Cinemática diferencial
-        vx = (self.phiD + self.phiE) * self.R / 2.0
-        vth = (self.phiD - self.phiE)* self.R / self.L
+        # ===============================
+        # Correção de overflow do encoder
+        # ===============================
 
+        deltaE = self.posE - self.posE_prev
+        deltaD = self.posD - self.posD_prev
+
+        c_range = self.encoder_range
+
+        if deltaE < -c_range/2:
+            deltaE += c_range
+        elif deltaE > c_range/2:
+            deltaE -= c_range
+
+        if deltaD < -c_range/2:
+            deltaD += c_range
+        elif deltaD > c_range/2:
+            deltaD -= c_range
+
+        # ===============================
+        # Incrementos de odometria
+        # ===============================
+
+        dS = (self.R/2.0) * (deltaD + deltaE)
+        dTheta = (self.R/self.L) * (deltaD - deltaE)
+
+        # ===============================
         # Integração da pose
-        self.x += vx * np.cos(self.th) * dt
-        self.y += vx * np.sin(self.th) * dt
-        self.th += vth * dt
+        # ===============================
+
+        self.x += dS * np.cos(self.th + dTheta/2)
+        self.y += dS * np.sin(self.th + dTheta/2)
+        self.th += dTheta
+
+        # normaliza ângulo [-pi,pi]
+        self.th = (self.th + np.pi) % (2*np.pi) - np.pi
+
+        # ===============================
+        # Velocidades
+        # ===============================
+
+        vx = (self.R/2.0) * (self.phiD + self.phiE)
+        vth = (self.R/self.L) * (self.phiD - self.phiE)
+
+        # ===============================
+        # Atualiza posições anteriores
+        # ===============================
+
+        self.posE_prev = self.posE
+        self.posD_prev = self.posD
 
         # Orientação como quaternion
         #odom_quat = tf_transformations.quaternion_from_euler(0, 0, self.th)
@@ -110,7 +157,7 @@ class EncoderOdom(Node):
         odom.twist.twist.angular.z = vth
         self.odom_pub.publish(odom)
 
-
+        self.get_logger().info(f"Pose: x={self.x:.3f}, y={self.y:.3f}, th={self.th:.3f} | Vel: vx={vx:.3f}, vth={vth:.3f}")
 
 
     def encoder_callback(self, msg: Float32MultiArray):
@@ -119,6 +166,11 @@ class EncoderOdom(Node):
         - posE / posD: posição absoluta (ticks)
         - phiE / phiD: velocidade (rad/s)
         """
+        if len(msg.data) < 4:
+            self.get_logger().warn("Encoder message with wrong size")
+            return
+        else:
+            self.get_logger().info(f"Received encoder data")
         # Posições das rodas
         self.posE = msg.data[0] # rad roda esquerda
         self.posD = msg.data[1] # rad roda direita
