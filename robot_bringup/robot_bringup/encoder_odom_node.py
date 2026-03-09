@@ -12,11 +12,11 @@ import numpy as np
 class EncoderOdom(Node):
     def __init__(self):
         super().__init__('encoder_odom')
-
+        range = (2**16 - 1)*(2 *np.pi / (4*224.4))
         # Parâmetros
-        self.declare_parameter('encoder_range', 2*np.pi)  # em radianos (2*pi)
-        self.declare_parameter('wheels_radius', 0.03)  # em metros
-        self.declare_parameter('wheels_distance', 0.174) # distância entre as rodas em metros
+        self.declare_parameter('encoder_range', range)  # em radianos
+        self.declare_parameter('wheels_radius', 0.0325)  # em metros
+        self.declare_parameter('wheels_distance', 0.175) # distância entre as rodas em metros
         self.declare_parameter('initial_state', [0.0, 0.0, 0.0]) # definição da posição inicial
 
         # Publishers
