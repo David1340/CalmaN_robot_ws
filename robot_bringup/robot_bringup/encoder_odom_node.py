@@ -42,11 +42,12 @@ class EncoderOdom(Node):
         self.phiE = 0.0  # rad/s roda esquerda
         self.phiD = 0.0  # rad/s roda direita
         # Posições das rodas
-        self.posE = None # rad roda esquerda
-        self.posD = None # rad roda direita
+        self.posE = 0.0 # rad roda esquerda
+        self.posD = 0.0 # rad roda direita
         # Posições das rodas (Prev)
         self.posE_prev = 0.0 # rad roda esquerda
         self.posD_prev = 0.0 # rad roda direita
+        self.stoped = True
 
 
 
@@ -67,8 +68,8 @@ class EncoderOdom(Node):
         self.last_time = now
 
         if dt <= 0:
-            return       
-        
+            return
+            
         # ===============================
         # Correção de overflow do encoder
         # ===============================
@@ -113,6 +114,11 @@ class EncoderOdom(Node):
         vx = (self.R/2.0) * (self.phiD + self.phiE)
         vth = (self.R/self.L) * (self.phiD - self.phiE)
 
+        # ===============================
+        # Atualiza posições anteriores
+        # ===============================
+        self.posE_prev = self.posE
+        self.posD_prev = self.posD
 
         # Orientação como quaternion
         #odom_quat = tf_transformations.quaternion_from_euler(0, 0, self.th)
@@ -155,31 +161,23 @@ class EncoderOdom(Node):
 
 
     def encoder_callback(self, msg: Float32MultiArray):
-        """
-        msg.data = [posE, posD, phiE, phiD]
-        - posE / posD: posição absoluta (ticks)
-        - phiE / phiD: velocidade (rad/s)
-        """
         if len(msg.data) < 4:
             self.get_logger().warn("Encoder message with wrong size")
             return
         else:
             self.get_logger().info(f"Received encoder data")
         
-        # ===============================
-        # Atualiza posições anteriores
-        # ===============================
-        self.posE_prev = self.posE
-        self.posD_prev = self.posD
+
         # Posições das rodas
         self.posE = msg.data[0] # rad roda esquerda
         self.posD = msg.data[1] # rad roda direita
         # Leitura das velocidades dos encoders
         self.phiE = msg.data[2]  # rad/s roda esquerda
         self.phiD = msg.data[3]  # rad/s roda direita
-        if(self.posE is None or self.posD is None):
+        if(self.stoped):
             self.posE_prev = self.posE
-            self.posD_prev = self.posD  
+            self.posD_prev = self.posD
+            self.stoped = False
         #self.update_odometry()
 
  
