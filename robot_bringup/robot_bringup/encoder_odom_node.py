@@ -7,6 +7,9 @@ from std_msgs.msg import Float32MultiArray, Header
 from tf2_ros import TransformBroadcaster
 #import tf_transformations
 import numpy as np
+from std_srvs.srv import Empty
+
+
 
 
 class EncoderOdom(Node):
@@ -31,6 +34,8 @@ class EncoderOdom(Node):
             self.encoder_callback,
             10
         )
+        # Serviço para resetar odometria
+        self.reset_service = self.create_service(Empty, '/reset_odom', self.reset_odometry_callback)
 
         initial_state = self.get_parameter('initial_state').value
         if len(initial_state) != 3:
@@ -179,6 +184,18 @@ class EncoderOdom(Node):
             self.posD_prev = self.posD
             self.stoped = False
         #self.update_odometry()
+        
+    def reset_callback(self, request, response):
+        self.get_logger().info("Resetando odometria!")
+
+        self.x = 0.0
+        self.y = 0.0
+        self.th = 0.0
+
+        self.posE_prev = self.posE
+        self.posD_prev = self.posD
+
+        return response
 
  
 
