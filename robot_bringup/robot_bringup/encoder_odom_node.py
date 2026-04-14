@@ -35,7 +35,7 @@ class EncoderOdom(Node):
             10
         )
         # Serviço para resetar odometria
-        self.reset_service = self.create_service(Empty, '/reset_odom', self.reset_odometry_callback)
+        self.reset_service = self.create_service(Empty, '/reset_odom', self.reset_callback)
 
         initial_state = self.get_parameter('initial_state').value
         if len(initial_state) != 3:
@@ -184,7 +184,7 @@ class EncoderOdom(Node):
             self.posD_prev = self.posD
             self.stoped = False
         #self.update_odometry()
-        
+
     def reset_callback(self, request, response):
         self.get_logger().info("Resetando odometria!")
 
