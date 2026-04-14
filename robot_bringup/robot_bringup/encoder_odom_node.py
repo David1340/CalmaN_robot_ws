@@ -47,12 +47,12 @@ class EncoderOdom(Node):
         self.phiE = 0.0  # rad/s roda esquerda
         self.phiD = 0.0  # rad/s roda direita
         # Posições das rodas
-        self.posE = None # rad roda esquerda
-        self.posD = None # rad roda direita
+        self.posE = 0.0 # rad roda esquerda
+        self.posD = 0.0 # rad roda direita
         # Posições das rodas (Prev)
         self.posE_prev = 0.0 # rad roda esquerda
         self.posD_prev = 0.0 # rad roda direita
-
+        self.stopped = True
 
 
         self.last_time = self.get_clock().now()
@@ -177,9 +177,10 @@ class EncoderOdom(Node):
         # Leitura das velocidades dos encoders
         self.phiE = msg.data[2]  # rad/s roda esquerda
         self.phiD = msg.data[3]  # rad/s roda direita
-        if(self.posE is None or self.posD is None):
+        if(self.stopped):
             self.posE_prev = self.posE
             self.posD_prev = self.posD  
+            self.stopped = False
         #self.update_odometry()
 
     def reset_callback(self, request, response):
