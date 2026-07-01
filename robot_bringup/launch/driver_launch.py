@@ -25,10 +25,6 @@ def generate_launch_description():
     )
         
     return LaunchDescription([
-        Node(package='robot_camera',
-            executable='camera_node', 
-            name='robot_camera', 
-            output='screen'),
         Node(package='stm32_bridge',
             executable='stm32_bridge',
             name='stm32_bridge_node',
