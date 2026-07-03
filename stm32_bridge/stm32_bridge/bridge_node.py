@@ -109,8 +109,8 @@ class STM32Bridge(Node):
                 encoder_msg.data = [values[0] * tick2rad, values[1] * tick2rad]
                 self.encoder_publisher.publish(encoder_msg)
 
-    except Exception as e:
-        self.get_logger().error(f'Error reading from serial: {e}')
+            except Exception as e:
+                self.get_logger().error(f'Error reading from serial: {e}')
 
     def _inverse_kinematics(self, v, w):
         v_r = (2 * v + w * self.L) / (2 * self.R)
