@@ -95,7 +95,7 @@ class STM32Bridge(Node):
 
                 # publicando encoder
                 encoder_msg = Float32MultiArray()
-                tick2rad = (2*np.pi/(4*224.4))
+                tick2rad = (2*np.pi/(4*16*120))
                 encoder_msg.data = [values[0]*tick2rad,values[1]*tick2rad] # encoder1 e encoder2
                 self.encoder_publisher.publish(encoder_msg)
 

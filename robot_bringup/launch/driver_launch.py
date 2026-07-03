@@ -21,7 +21,7 @@ def generate_launch_description():
     rplidar_launch = os.path.join(
         get_package_share_directory('rplidar_ros'),
         'launch',
-        'rplidar_a2m8_launch.py'
+        'rplidar_a1_launch.py'
     )
         
     return LaunchDescription([
@@ -35,7 +35,9 @@ def generate_launch_description():
         ),
 
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(rplidar_launch)
-        ),
-
+        PythonLaunchDescriptionSource(rplidar_launch),
+        launch_arguments={
+            'serial_port': '/dev/ttyUSB0'
+        }.items()
+    )
     ])

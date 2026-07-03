@@ -9,17 +9,14 @@ from tf2_ros import TransformBroadcaster
 import numpy as np
 from std_srvs.srv import Empty
 
-
-
-
 class EncoderOdom(Node):
     def __init__(self):
         super().__init__('encoder_odom')
-        range = (2**16 - 1)*(2 *np.pi / (4*224.4))
+        range = (2**16 - 1)*(2 *np.pi / (4*16*120))
         # Parâmetros
         self.declare_parameter('encoder_range', range)  # em radianos
-        self.declare_parameter('wheels_radius', 0.0325)  # em metros
-        self.declare_parameter('wheels_distance', 0.175) # distância entre as rodas em metros
+        self.declare_parameter('wheels_radius', 0.033)  # em metros
+        self.declare_parameter('wheels_distance', 0.159) # distância entre as rodas em metros
         self.declare_parameter('initial_state', [0.0, 0.0, 0.0]) # definição da posição inicial
 
         # Publishers
@@ -115,8 +112,8 @@ class EncoderOdom(Node):
         # Velocidades
         # ===============================
 
-        vx = (self.R/2.0) * (self.phiD + self.phiE)
-        vth = (self.R/self.L) * (self.phiD - self.phiE)
+        #vx = (self.R/2.0) * (self.phiD + self.phiE)
+        #vth = (self.R/self.L) * (self.phiD - self.phiE)
 
         # ===============================
         # Atualiza posições anteriores
@@ -132,7 +129,7 @@ class EncoderOdom(Node):
         joint_state.header = Header()
         joint_state.header.stamp = now.to_msg()
         joint_state.name = ['left_wheel_joint', 'right_wheel_joint']
-        joint_state.velocity = [self.phiE, self.phiD]
+        #joint_state.velocity = [self.phiE, self.phiD]
         joint_state.position = [self.posE, self.posD]  # posE(rad),posD(rad)
         self.joint_pub.publish(joint_state)
 
@@ -161,7 +158,7 @@ class EncoderOdom(Node):
         odom.twist.twist.angular.z = vth
         self.odom_pub.publish(odom)
 
-        self.get_logger().info(f"Pose: x={self.x:.3f}, y={self.y:.3f}, th={self.th:.3f} | Vel: vx={vx:.3f}, vth={vth:.3f}")
+        self.get_logger().info(f"Pose: x={self.x:.3f}, y={self.y:.3f}, th={self.th:.3f}")
 
 
     def encoder_callback(self, msg: Float32MultiArray):
@@ -176,8 +173,8 @@ class EncoderOdom(Node):
         self.posE = msg.data[0] # rad roda esquerda
         self.posD = msg.data[1] # rad roda direita
         # Leitura das velocidades dos encoders
-        self.phiE = msg.data[2]  # rad/s roda esquerda
-        self.phiD = msg.data[3]  # rad/s roda direita
+        #self.phiE = msg.data[2]  # rad/s roda esquerda
+        #self.phiD = msg.data[3]  # rad/s roda direita
         if(self.stopped):
             self.posE_prev = self.posE
             self.posD_prev = self.posD  
