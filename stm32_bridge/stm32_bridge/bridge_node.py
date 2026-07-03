@@ -86,28 +86,28 @@ class STM32Bridge(Node):
 
     def read_serial(self):
         #self.cnt = self.cnt + 1
-if self.serial and self.serial.is_open:
-    msg = self._montar_mensagem(self.v_r, self.v_l)
-    self.serial.write(msg)
-    try:
-        # Procura o byte de sincronização
-        sync = self.serial.read(1)
-        if sync != b'\xFA':
-            self.get_logger().warning('Sync byte não encontrado, descartando')
-            return
+        if self.serial and self.serial.is_open:
+            msg = self._montar_mensagem(self.v_r, self.v_l)
+            self.serial.write(msg)
+            try:
+                # Procura o byte de sincronização
+                sync = self.serial.read(1)
+                if sync != b'\xFA':
+                    self.get_logger().warning('Sync byte não encontrado, descartando')
+                    return
 
-        # Lê exatamente 4 bytes (2x int16)
-        data = self.serial.read(4)
-        if len(data) != 4:
-            self.get_logger().warning(f'Leitura incompleta: {len(data)} bytes')
-            return
+                # Lê exatamente 4 bytes (2x int16)
+                data = self.serial.read(4)
+                if len(data) != 4:
+                    self.get_logger().warning(f'Leitura incompleta: {len(data)} bytes')
+                    return
 
-        values = np.frombuffer(data, dtype=np.int16).astype(np.float32)
+                values = np.frombuffer(data, dtype=np.int16).astype(np.float32)
 
-        encoder_msg = Float32MultiArray()
-        tick2rad = (2 * np.pi / (4 * 16 * 120))
-        encoder_msg.data = [values[0] * tick2rad, values[1] * tick2rad]
-        self.encoder_publisher.publish(encoder_msg)
+                encoder_msg = Float32MultiArray()
+                tick2rad = (2 * np.pi / (4 * 16 * 120))
+                encoder_msg.data = [values[0] * tick2rad, values[1] * tick2rad]
+                self.encoder_publisher.publish(encoder_msg)
 
     except Exception as e:
         self.get_logger().error(f'Error reading from serial: {e}')
