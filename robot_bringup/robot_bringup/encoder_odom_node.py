@@ -12,7 +12,7 @@ from std_srvs.srv import Empty
 class EncoderOdom(Node):
     def __init__(self):
         super().__init__('encoder_odom')
-        range = (2**16 - 1)*(2 *np.pi / (4*16*120))
+        range = (2**16 - 1)*(2 *np.pi / 3840)
         # Parâmetros
         self.declare_parameter('encoder_range', range)  # em radianos
         self.declare_parameter('wheels_radius', 0.033)  # em metros

@@ -105,7 +105,7 @@ class STM32Bridge(Node):
                 values = np.frombuffer(data, dtype=np.int16).astype(np.float32)
 
                 encoder_msg = Float32MultiArray()
-                tick2rad = (2 * np.pi / (4 * 16 * 120))
+                tick2rad = (2 * np.pi / 3840)
                 encoder_msg.data = [values[0] * tick2rad, values[1] * tick2rad]
                 self.encoder_publisher.publish(encoder_msg)
 
