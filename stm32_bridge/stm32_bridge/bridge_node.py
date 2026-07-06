@@ -96,9 +96,9 @@ class STM32Bridge(Node):
                     self.get_logger().warning('Sync byte não encontrado, descartando')
                     return
 
-                # Lê exatamente 4 bytes (2x int16)
-                data = self.serial.read(4)
-                if len(data) != 4:
+                # Lê exatamente 8 bytes (4x int16)
+                data = self.serial.read(8)
+                if len(data) != 8:
                     self.get_logger().warning(f'Leitura incompleta: {len(data)} bytes')
                     return
 
@@ -106,7 +106,9 @@ class STM32Bridge(Node):
 
                 encoder_msg = Float32MultiArray()
                 tick2rad = (2 * np.pi / 3840)
-                encoder_msg.data = [values[0] * tick2rad, values[1] * tick2rad]
+                phiE = values[2]*tick2rad/(10e-3)#rad/s
+                phiD = values[3]*tick2rad/(10e-3)# #rad/s
+                encoder_msg.data = [values[0] * tick2rad, values[1] * tick2rad, phiE, phiD]
                 self.encoder_publisher.publish(encoder_msg)
 
             except Exception as e:

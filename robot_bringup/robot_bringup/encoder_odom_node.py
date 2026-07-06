@@ -112,8 +112,8 @@ class EncoderOdom(Node):
         # Velocidades
         # ===============================
 
-        #vx = (self.R/2.0) * (self.phiD + self.phiE)
-        #vth = (self.R/self.L) * (self.phiD - self.phiE)
+        vx = (self.R/2.0) * (self.phiD + self.phiE)
+        vth = (self.R/self.L) * (self.phiD - self.phiE)
 
         # ===============================
         # Atualiza posições anteriores
@@ -129,7 +129,7 @@ class EncoderOdom(Node):
         joint_state.header = Header()
         joint_state.header.stamp = now.to_msg()
         joint_state.name = ['left_wheel_joint', 'right_wheel_joint']
-        #joint_state.velocity = [self.phiE, self.phiD]
+        joint_state.velocity = [self.phiE, self.phiD]
         joint_state.position = [self.posE, self.posD]  # posE(rad),posD(rad)
         self.joint_pub.publish(joint_state)
 
@@ -173,8 +173,8 @@ class EncoderOdom(Node):
         self.posE = msg.data[0] # rad roda esquerda
         self.posD = msg.data[1] # rad roda direita
         # Leitura das velocidades dos encoders
-        #self.phiE = msg.data[2]  # rad/s roda esquerda
-        #self.phiD = msg.data[3]  # rad/s roda direita
+        self.phiE = msg.data[2]  # rad/s roda esquerda
+        self.phiD = msg.data[3]  # rad/s roda direita
         if(self.stopped):
             self.posE_prev = self.posE
             self.posD_prev = self.posD  
