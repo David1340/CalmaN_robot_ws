@@ -105,12 +105,12 @@ class STM32Bridge(Node):
                 payload, checksum = data[:8], data[8]
 
                 calc = 0
-                    for byte in payload:
-                        calc ^= byte
-                    if calc != checksum:
-                        # False sync (0xFE was actually payload data) - don't consume,
-                        # just go back to scanning one byte at a time
-                        return
+                for byte in payload:
+                    calc ^= byte
+                if calc != checksum:
+                    # False sync (0xFE was actually payload data) - don't consume,
+                    # just go back to scanning one byte at a time
+                    return
 
                 values = np.frombuffer(payload, dtype=np.int16).astype(np.float32)
 
