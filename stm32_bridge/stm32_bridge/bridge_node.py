@@ -9,10 +9,10 @@ import numpy as np
 
 
 def inverter_uL(x):
-    return np.sign(x)*(np.abs(x) - (-0.414))/1.459
+    return np.sign(x)*(np.abs(x) - (-0.320))/1.325
 
 def inverter_uR(x):
-    return np.sign(x)*(np.abs(x) - (-0.404))/1.423
+    return np.sign(x)*(np.abs(x) - (-0.156))/1.167
 
 def satura(x):
     if np.abs(x)>1:
@@ -92,17 +92,27 @@ class STM32Bridge(Node):
             try:
                 # Procura o byte de sincronização
                 sync = self.serial.read(1)
-                if sync != b'\xFA':
+                if sync != b'\xFE':
                     self.get_logger().warning('Sync byte não encontrado, descartando')
                     return
 
-                # Lê exatamente 8 bytes (4x int16)
-                data = self.serial.read(8)
-                if len(data) != 8:
+                # Lê exatamente 9 bytes (4x int16 + 1 byte de checksum)
+                data = self.serial.read(9)
+                if len(data) != 9:
                     self.get_logger().warning(f'Leitura incompleta: {len(data)} bytes')
                     return
 
-                values = np.frombuffer(data, dtype=np.int16).astype(np.float32)
+                payload, checksum = data[:8], data[8]
+
+                calc = 0
+                    for byte in payload:
+                        calc ^= byte
+                    if calc != checksum:
+                        # False sync (0xFE was actually payload data) - don't consume,
+                        # just go back to scanning one byte at a time
+                        return
+
+                values = np.frombuffer(payload, dtype=np.int16).astype(np.float32)
 
                 encoder_msg = Float32MultiArray()
                 tick2rad = (2 * np.pi / 3840)
@@ -121,12 +131,12 @@ class STM32Bridge(Node):
     
     def _montar_mensagem(self, v_r, v_l):
         #Vmax = 25.2 #rad/s velocidade máxima de cada roda
-        Vmax = 250 #bit
+        Vmax = 16 #bit
         uL = v_l/Vmax #m/s ->  -1 a 1
         uR = v_r/Vmax #m/s ->  -1 a 1
 
-        #uL = satura(inverter_uL(uL))
-        #uR = satura(inverter_uR(uR))
+        uL = satura(inverter_uL(uL))
+        uR = satura(inverter_uR(uR))
 
         msg = [254, 0, 0, 0, 0]
         msg[1] = int(round(250 * abs(uR)))
