@@ -130,7 +130,7 @@ class STM32Bridge(Node):
         
         if(abs(w) > Wmax):
             w = np.sign(w)*Wmax
-        Vmax_w = Vmax*(1-abs(W)/Wmax)
+        Vmax_w = Vmax*(1-abs(w)/Wmax)
         if(abs(v) > Vmax_w):
             v = np.sign(v)*Vmax_w
         v_r = (2 * v + w * self.L) / (2 * self.R)
