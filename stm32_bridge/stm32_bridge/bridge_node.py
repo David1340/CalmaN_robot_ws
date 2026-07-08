@@ -125,13 +125,20 @@ class STM32Bridge(Node):
                 self.get_logger().error(f'Error reading from serial: {e}')
 
     def _inverse_kinematics(self, v, w):
+        Wmax = 6.64
+        Vmax = 0.528 
+        
+        if(abs(w) > Wmax):
+            w = np.sign(w)*Wmax
+        Vmax_w = Vmax*(1-abs(W)/Wmax)
+        if(abs(v) > Vmax_w):
+            v = np.sign(v)*Vmax_w
         v_r = (2 * v + w * self.L) / (2 * self.R)
         v_l = (2 * v - w * self.L) / (2 * self.R)
         return v_r, v_l
     
     def _montar_mensagem(self, v_r, v_l):
-        #Vmax = 25.2 #rad/s velocidade máxima de cada roda
-        Vmax = 16 #bit
+        Vmax = 16 #rad/s velocidade máxima de cada roda
         uL = v_l/Vmax #m/s ->  -1 a 1
         uR = v_r/Vmax #m/s ->  -1 a 1
 
@@ -139,14 +146,14 @@ class STM32Bridge(Node):
         uR = satura(inverter_uR(uR))
 
         msg = [254, 0, 0, 0, 0]
-        msg[1] = int(round(250 * abs(uR)))
-        msg[3] = int(round(250 * abs(uL)))
-        if uR >= 0:
+        msg[1] = int(round(250 * abs(uL)))
+        msg[3] = int(round(250 * abs(uR)))
+        if uL >= 0:
             msg[2] = 0
         else:
             msg[2] = 1
 
-        if uL >= 0:
+        if uR >= 0:
             msg[4] = 0
         else:
             msg[4] = 1
