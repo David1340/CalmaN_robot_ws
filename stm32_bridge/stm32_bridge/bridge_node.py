@@ -9,10 +9,10 @@ import numpy as np
 
 
 def inverter_uL(x):
-    return np.sign(x)*(np.abs(x) - (-0.320))/1.325
+    return np.sign(x)*(np.abs(x) - (-0.275))/1.312
 
 def inverter_uR(x):
-    return np.sign(x)*(np.abs(x) - (-0.156))/1.167
+    return np.sign(x)*(np.abs(x) - (-0.356))/1.681
 
 def satura(x):
     if np.abs(x)>1:
@@ -125,8 +125,8 @@ class STM32Bridge(Node):
                 self.get_logger().error(f'Error reading from serial: {e}')
 
     def _inverse_kinematics(self, v, w):
-        Wmax = 6.64
-        Vmax = 0.528 
+        Wmax = 6.14
+        Vmax = 0.4
         
         if(abs(w) > Wmax):
             w = np.sign(w)*Wmax
@@ -138,7 +138,7 @@ class STM32Bridge(Node):
         return v_r, v_l
     
     def _montar_mensagem(self, v_r, v_l):
-        Vmax = 16 #rad/s velocidade máxima de cada roda
+        Vmax = 12 #rad/s velocidade máxima de cada roda
         uL = v_l/Vmax #m/s ->  -1 a 1
         uR = v_r/Vmax #m/s ->  -1 a 1
 
